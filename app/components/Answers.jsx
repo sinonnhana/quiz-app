@@ -32,7 +32,7 @@ class Answers extends React.Component {
                 classNames: updatedClassNames
             })
 
-            this.props.showButton();
+            this.props.showButton(answer);  //  传给 Main
         }
     }
     

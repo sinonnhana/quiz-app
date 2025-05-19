@@ -3,6 +3,7 @@ import data from '../data/data';
 import Answers from 'Answers';
 import Popup from 'Popup';
 import Footer from 'Footer';
+import Review from 'Review';
 
 class Main extends React.Component {
     constructor(props) {
@@ -13,7 +14,14 @@ class Main extends React.Component {
             showButton: false,
             questionAnswered: false,
             score: 0,
-            displayPopup: 'flex'
+            displayPopup: 'flex',
+
+            answers: [],
+            timeLeft: 20,    // 当前题剩余时间（单位：秒）
+            timer: null,      // 保存 setInterval 的 ID
+
+            reviewMode: false,       // 是否进入回顾模式
+            userAnswers: [],         // 用户每题选的答案（索引：1~4）
         }
         this.nextQuestion = this.nextQuestion.bind(this);
         this.handleShowButton = this.handleShowButton.bind(this);
@@ -28,19 +36,37 @@ class Main extends React.Component {
             correct: data[nr].correct,
             nr: this.state.nr + 1
         });
+
+
+        clearInterval(this.state.timer);  // 清除上一题的计时器
+        const timer = setInterval(() => {
+            this.setState(prevState => {
+                if (prevState.timeLeft <= 1) {
+                    clearInterval(this.state.timer);
+                    if (!this.state.questionAnswered) {
+                        this.setState({
+                            questionAnswered: true,
+                            showButton: false
+                        });
+                        setTimeout(this.nextQuestion, 1000);  // 超时后自动跳题
+                    }
+                    return { timeLeft: 0 };
+                }
+                return { timeLeft: prevState.timeLeft - 1 };
+            });
+        }, 1000);
+
+        this.setState({ timer, timeLeft: 20 });
     }
 
-    componentWillMount() {
-        let { nr } = this.state;
-        this.pushData(nr);
-    }
 
     nextQuestion() {
+        clearInterval(this.state.timer);
         let { nr, total, score } = this.state;
 
         if(nr === total){
             this.setState({
-                displayPopup: 'flex'
+                reviewMode: true  // ✅ 进入回顾页面
             });
         } else {
             this.pushData(nr);
@@ -52,17 +78,28 @@ class Main extends React.Component {
 
     }
 
-    handleShowButton() {
-        this.setState({
+
+    handleShowButton(selectedAnswer) {
+        clearInterval(this.state.timer);
+        this.setState(prevState => ({
             showButton: true,
-            questionAnswered: true
-        })
+            questionAnswered: true,
+            userAnswers: [...prevState.userAnswers, selectedAnswer]
+        }));
     }
 
     handleStartQuiz() {
         this.setState({
             displayPopup: 'none',
-            nr: 1
+            nr: 0,
+            score: 0,
+            showButton: false,
+            questionAnswered: false,
+            reviewMode: false,
+            userAnswers: [],
+            timeLeft: 20
+        }, () => {
+            this.pushData(0);
         });
     }
 
@@ -74,7 +111,16 @@ class Main extends React.Component {
 
     render() {
         let { nr, total, question, answers, correct, showButton, questionAnswered, displayPopup, score} = this.state;
-
+        if (this.state.reviewMode) {
+            return (
+                <Review
+                    data={data}
+                    userAnswers={this.state.userAnswers}
+                    score={this.state.score}
+                    onRestart={this.handleStartQuiz}
+                />
+            );
+        }
         return (
             <div className="container">
 
@@ -85,6 +131,9 @@ class Main extends React.Component {
                         <div id="question">
                             <h4>Question {nr}/{total}</h4>
                             <p>{question}</p>
+                            <p className={this.state.timeLeft <= 5 ? 'timer danger' : 'timer'}>
+                                <strong>Time Left: {this.state.timeLeft}s</strong>
+                            </p>
                         </div>
                         <Answers answers={answers} correct={correct} showButton={this.handleShowButton} isAnswered={questionAnswered} increaseScore={this.handleIncreaseScore}/>
                         <div id="submit">
