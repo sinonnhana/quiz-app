@@ -1,5 +1,5 @@
+// app/components/Main.jsx
 import React from 'react';
-import data from '../data/data';
 import Answers from 'Answers';
 import Popup from 'Popup';
 import Footer from 'Footer';
@@ -8,6 +8,8 @@ import Review from 'Review';
 class Main extends React.Component {
     constructor(props) {
         super(props);
+        const data = props.data || [];
+
         this.state = {
             nr: 0,
             total: data.length,
@@ -15,14 +17,13 @@ class Main extends React.Component {
             questionAnswered: false,
             score: 0,
             displayPopup: 'flex',
-
             answers: [],
-            timeLeft: 20,    // 当前题剩余时间（单位：秒）
-            timer: null,      // 保存 setInterval 的 ID
+            timeLeft: 20,
+            timer: null,
+            reviewMode: false,
+            userAnswers: [],
+        };
 
-            reviewMode: false,       // 是否进入回顾模式
-            userAnswers: [],         // 用户每题选的答案（索引：1~4）
-        }
         this.nextQuestion = this.nextQuestion.bind(this);
         this.handleShowButton = this.handleShowButton.bind(this);
         this.handleStartQuiz = this.handleStartQuiz.bind(this);
@@ -30,15 +31,15 @@ class Main extends React.Component {
     }
 
     pushData(nr) {
+        const data = this.props.data;
         this.setState({
             question: data[nr].question,
-            answers: [data[nr].answers[0], data[nr].answers[1], data[nr].answers[2], data[nr].answers[3] ],
+            answers: [...data[nr].answers],
             correct: data[nr].correct,
             nr: this.state.nr + 1
         });
 
-
-        clearInterval(this.state.timer);  // 清除上一题的计时器
+        clearInterval(this.state.timer);
         const timer = setInterval(() => {
             this.setState(prevState => {
                 if (prevState.timeLeft <= 1) {
@@ -48,7 +49,7 @@ class Main extends React.Component {
                             questionAnswered: true,
                             showButton: false
                         });
-                        setTimeout(this.nextQuestion, 1000);  // 超时后自动跳题
+                        setTimeout(this.nextQuestion, 1000);
                     }
                     return { timeLeft: 0 };
                 }
@@ -59,15 +60,11 @@ class Main extends React.Component {
         this.setState({ timer, timeLeft: 20 });
     }
 
-
     nextQuestion() {
         clearInterval(this.state.timer);
-        let { nr, total, score } = this.state;
-
-        if(nr === total){
-            this.setState({
-                reviewMode: true  // ✅ 进入回顾页面
-            });
+        const { nr, total } = this.state;
+        if (nr === total) {
+            this.setState({ reviewMode: true });
         } else {
             this.pushData(nr);
             this.setState({
@@ -75,9 +72,7 @@ class Main extends React.Component {
                 questionAnswered: false
             });
         }
-
     }
-
 
     handleShowButton(selectedAnswer) {
         clearInterval(this.state.timer);
@@ -104,13 +99,15 @@ class Main extends React.Component {
     }
 
     handleIncreaseScore() {
-        this.setState({
-            score: this.state.score + 1
-        });
+        this.setState(prevState => ({
+            score: prevState.score + 1
+        }));
     }
 
     render() {
-        let { nr, total, question, answers, correct, showButton, questionAnswered, displayPopup, score} = this.state;
+        const data = this.props.data || [];
+        const { nr, total, question, answers, correct, showButton, questionAnswered, displayPopup, score } = this.state;
+
         if (this.state.reviewMode) {
             return (
                 <Review
@@ -118,14 +115,14 @@ class Main extends React.Component {
                     userAnswers={this.state.userAnswers}
                     score={this.state.score}
                     onRestart={this.handleStartQuiz}
+                    onExit={this.props.onBack}  // ✅ 新增
                 />
             );
         }
+
         return (
             <div className="container">
-
-                <Popup style={{display: displayPopup}} score={score} total={total} startQuiz={this.handleStartQuiz}/>
-
+                <Popup style={{ display: displayPopup }} score={score} total={total} startQuiz={this.handleStartQuiz} />
                 <div className="row">
                     <div className="col-lg-10 col-lg-offset-1">
                         <div id="question">
@@ -135,9 +132,9 @@ class Main extends React.Component {
                                 <strong>Time Left: {this.state.timeLeft}s</strong>
                             </p>
                         </div>
-                        <Answers answers={answers} correct={correct} showButton={this.handleShowButton} isAnswered={questionAnswered} increaseScore={this.handleIncreaseScore}/>
+                        <Answers answers={answers} correct={correct} showButton={this.handleShowButton} isAnswered={questionAnswered} increaseScore={this.handleIncreaseScore} />
                         <div id="submit">
-                            {showButton ? <button className="fancy-btn" onClick={this.nextQuestion} >{nr===total ? 'Finish quiz' : 'Next question'}</button> : null}
+                            {showButton ? <button className="fancy-btn" onClick={this.nextQuestion}>{nr === total ? 'Finish quiz' : 'Next question'}</button> : null}
                         </div>
                     </div>
                 </div>
@@ -145,6 +142,6 @@ class Main extends React.Component {
             </div>
         );
     }
-};
+}
 
-export default Main
+export default Main;

@@ -32,15 +32,15 @@
     "babel-preset-react": "^6.16.0",
     "express": "^4.14.0",
     "fbjs": "^3.0.5",
-    "react": "^15.4.1",
-    "react-dom": "^15.4.1",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
     "react-router": "^3.0.0",
     "webpack": "^1.14.0"
   },
   "devDependencies": {
-    "css-loader": "^0.26.1",
+    "css-loader": "^0.26.4",
     "json-loader": "^0.5.4",
     "react-addons-css-transition-group": "^15.4.1",
-    "style-loader": "^0.13.1"
+    "style-loader": "^0.13.2"
   }
 }

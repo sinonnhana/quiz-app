@@ -4,55 +4,42 @@ class Answers extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            isAnswered: false,
             classNames: ['', '', '', '']
-        }
-        
+        };
+
         this.checkAnswer = this.checkAnswer.bind(this);
     }
-    
+
     checkAnswer(e) {
-        let { isAnswered } = this.props;
-        
-        if(!isAnswered) {
-            let elem = e.currentTarget;
-            let { correct, increaseScore } = this.props;
-            let answer = Number(elem.dataset.id);
-            let updatedClassNames = this.state.classNames;
+        const { isAnswered, correct, increaseScore, showButton } = this.props;
 
-            if(answer === correct){
-                updatedClassNames[answer-1] = 'right';
+        if (!isAnswered) {
+            const answer = Number(e.currentTarget.dataset.id);
+            const updatedClassNames = [...this.state.classNames];
+
+            if (answer === correct) {
+                updatedClassNames[answer - 1] = 'right';
                 increaseScore();
+            } else {
+                updatedClassNames[answer - 1] = 'wrong';
             }
-            else {
-                updatedClassNames[answer-1] = 'wrong';
-            }
-            
-            this.setState({
-                classNames: updatedClassNames
-            })
 
-            this.props.showButton(answer);  //  传给 Main
+            this.setState({ classNames: updatedClassNames });
+            showButton(answer);  // 通知 Main
         }
     }
-    
-    shouldComponentUpdate() {
-        this.setState({
-            classNames: ['', '', '', '']
-        });
-        return true;
+
+    // ✅ 使用 componentDidUpdate 监测题目变化并重置按钮状态
+    componentDidUpdate(prevProps) {
+        if (prevProps.answers !== this.props.answers) {
+            this.setState({ classNames: ['', '', '', ''] });
+        }
     }
-    
+
     render() {
-        let { answers } = this.props;
-        let { classNames } = this.state;
-        
-        let transition = {
-            transitionName: "example",
-            transitionEnterTimeout: 500,
-            transitionLeaveTimeout: 300
-        }
-        
+        const { answers } = this.props;
+        const { classNames } = this.state;
+
         return (
             <div id="answers">
                 <ul>
@@ -66,4 +53,4 @@ class Answers extends React.Component {
     }
 }
 
-export default Answers
+export default Answers;

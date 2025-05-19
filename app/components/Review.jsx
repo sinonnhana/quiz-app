@@ -1,6 +1,7 @@
 import React from 'react';
 
-const Review = ({ data, userAnswers, score, onRestart }) => {
+
+const Review = ({ data, userAnswers, score, onRestart, onExit }) => {
     return (
         <div className="review-container">
             {/* 顶部栏 */}
@@ -40,7 +41,11 @@ const Review = ({ data, userAnswers, score, onRestart }) => {
                     </div>
                 );
             })}
+            <div className="review-footer">
+                <button className="logout-btn" onClick={onExit}>← Back to Dashboard</button>
+            </div>
         </div>
+
     );
 };
 
